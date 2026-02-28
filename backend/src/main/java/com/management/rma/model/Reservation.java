@@ -1,5 +1,6 @@
 package com.management.rma.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -16,7 +17,9 @@ public class Reservation {
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 
+    // Inside Reservation.java
     @ManyToOne
     @JoinColumn(name = "room_id")
-    private Room room; // This links the Reservation to the Room Data
+    @JsonBackReference // This tells Jackson: "Stop here, don't go back into Room"
+    private Room room;
 }

@@ -15,11 +15,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for development
-                .cors(withDefaults())        // Use the @CrossOrigin settings from your Controller
+                .csrf(csrf -> csrf.disable()) // <--- THIS MUST BE DISABLED for POST/DELETE to work
+                .cors(withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**").permitAll() // Allow everyone to see the API
-                        .anyRequest().authenticated()           // Hide everything else
+                        .requestMatchers("/api/**").permitAll()
+                        .anyRequest().authenticated()
                 );
         return http.build();
     }

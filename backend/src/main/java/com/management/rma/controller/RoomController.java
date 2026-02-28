@@ -18,10 +18,14 @@ public class RoomController {
     public List<Room> getAllRooms() {
         return roomRepository.findAll();
     }
-    // Inside RoomController.java
 
-    @PostMapping // Handles "Saving" a new room
+    // Inside RoomController.java
+    @PostMapping
     public Room addRoom(@RequestBody Room room) {
+        // Check if the room number already exists in the database
+        if (roomRepository.existsByRoomNumber(room.getRoomNumber())) {
+            throw new RuntimeException("Room number " + room.getRoomNumber() + " already exists!");
+        }
         return roomRepository.save(room);
     }
 
