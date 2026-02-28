@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.3'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.management'
+version = '0.0.1-SNAPSHOT'
+description = 'RMA'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Web: For REST Controllers and JSON (The Processes in your DFD)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Security: For the "Authenticate Staff" gatekeeper logic
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // JPA: To connect your Java Entities to PostgreSQL tables
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // PostgreSQL Driver: Required for Railway database connection
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Lombok: To keep your Entities clean (auto-generates Getters/Setters)
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
