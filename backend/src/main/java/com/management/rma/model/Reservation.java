@@ -19,7 +19,7 @@ public class Reservation {
 
     private String phoneNumber;
     private Integer numberOfPeople;
-    private String reservationStatus; // "Active", "Cancelled", "Completed"
+    private String reservationStatus;
 
     // Inside Reservation.java
     @ManyToOne

@@ -23,10 +23,11 @@ public class Room {
     @Column(unique = true)
     private String roomNumber;
 
+    private String phoneNumber;
+    private Integer numberOfPeople;
     private String type;
     private String status; // Keep this (e.g., "Available", "Occupied")
 
-    // Manual Constructor for the DataLoader
     public Room(String roomNumber, String type, Double price, String status) {
         this.roomNumber = roomNumber;
         this.type = type;

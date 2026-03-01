@@ -52,18 +52,33 @@ public class ReservationController {
 
     @PutMapping("/{id}/check-in")
     public Room checkIn(@PathVariable Long id) {
-        Room room = roomRepository.findById(id).orElseThrow();
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        Reservation res = reservationRepository.findAll().stream()
+                .filter(r -> r.getRoom().getId().equals(id) && !"Cancelled".equals(r.getReservationStatus()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No active reservation found for this room"));
+
+        room.setGuestName(res.getGuestName());
         room.setStatus("Occupied");
-        room.setCurrentCheckInTime(LocalDateTime.now()); // Record the start
+        room.setCurrentCheckInTime(LocalDateTime.now());
+
+        res.setReservationStatus("Checked-In");
+        reservationRepository.save(res);
+
         return roomRepository.save(room);
     }
 
     @PutMapping("/{id}/check-out")
     public Room checkOut(@PathVariable Long id) {
         Room room = roomRepository.findById(id).orElseThrow();
+
         room.setStatus("Available");
-        room.setLastCheckOutTime(LocalDateTime.now()); // Record the end
-        room.setCurrentCheckInTime(null); // Clear the current check-in
+        room.setLastCheckOutTime(LocalDateTime.now());
+        room.setCurrentCheckInTime(null);
+        room.setGuestName(null);
+
         return roomRepository.save(room);
     }
 }
