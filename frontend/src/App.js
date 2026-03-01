@@ -9,7 +9,10 @@ function App() {
     // Modal States
     const [activeModal, setActiveModal] = useState(null); // 'book' or 'direct'
     const [selectedRoomId, setSelectedRoomId] = useState(null);
-    const [formData, setFormData] = useState({ guestName: '', phoneNumber: '', numberOfPeople: 1 });
+    const [formData, setFormData] = useState({
+        guestName: '',
+        phoneNumber: ''
+    });
 
     const fetchRooms = () => {
         setLoading(true);
@@ -30,7 +33,7 @@ function App() {
     const closeModals = () => {
         setActiveModal(null);
         setSelectedRoomId(null);
-        setFormData({ guestName: '', phoneNumber: '', numberOfPeople: 1 });
+        setFormData({ guestName: '', phoneNumber: '' });
     };
 
     const submitBooking = (e) => {
@@ -45,11 +48,15 @@ function App() {
 
     const submitDirectCheckIn = (e) => {
         e.preventDefault();
-        axios.post(`http://localhost:8080/api/rooms/${selectedRoomId}/check-in-direct`, { guestName: formData.guestName })
+        axios.post(`http://localhost:8080/api/reservations/${selectedRoomId}/check-in-direct`, {
+            guestName: formData.guestName,
+            phoneNumber: formData.phoneNumber // 👈 Add this line
+        })
             .then(() => {
                 fetchRooms();
                 closeModals();
-            }).catch(() => alert("Direct check-in failed"));
+            })
+            .catch(err => alert("Direct check-in failed: " + err.message));
     };
 
     const handleCheckIn = (roomId) => axios.put(`http://localhost:8080/api/reservations/${roomId}/check-in`).then(() => fetchRooms());
@@ -69,7 +76,11 @@ function App() {
             axios.delete(`http://localhost:8080/api/rooms/${id}`).then(() => fetchRooms());
         }
     };
-
+    const handleMarkCleaned = (roomId) => {
+        axios.put(`http://localhost:8080/api/rooms/${roomId}/clean`)
+            .then(() => fetchRooms())
+            .catch(err => console.error("Cleaning update failed", err));
+    };
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
             {/* Header / Stats Section */}
@@ -81,6 +92,7 @@ function App() {
                     </div>
                     <div className="flex gap-4">
                         <StatCard label="Available" count={rooms.filter(r => r.status === 'Available').length} color="text-green-600" />
+                        <StatCard label="Cleaning" count={rooms.filter(r => r.status === 'Cleaning').length} color="text-blue-600" />
                         <StatCard label="Occupied" count={rooms.filter(r => r.status === 'Occupied').length} color="text-rose-600" />
                         <StatCard label="Reserved" count={rooms.filter(r => r.status === 'Reserved').length} color="text-amber-600" />
                     </div>
@@ -155,6 +167,14 @@ function App() {
                                             {room.status === 'Occupied' && (
                                                 <button onClick={() => handleCheckOut(room.id)} className="px-4 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-black transition-all">Check Out</button>
                                             )}
+                                            {room.status === 'Cleaning' && (
+                                                <button
+                                                    onClick={() => handleMarkCleaned(room.id)}
+                                                    className="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all"
+                                                >
+                                                    ✨ Mark Cleaned
+                                                </button>
+                                            )}
                                             <button onClick={() => handleDelete(room.id)} className="ml-2 p-1 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">🗑</button>
                                         </div>
                                     </td>
@@ -168,6 +188,7 @@ function App() {
             </div>
 
             {/* --- CUSTOM MODALS --- */}
+            {/* --- CUSTOM MODALS --- */}
             {activeModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 transform transition-all animate-in fade-in zoom-in duration-200">
@@ -175,14 +196,22 @@ function App() {
                             {activeModal === 'book' ? '📅 Room Reservation' : '⚡ Direct Check-in'}
                         </h2>
                         <form onSubmit={activeModal === 'book' ? submitBooking : submitDirectCheckIn} className="space-y-4">
-                            <Input label="Guest Full Name" placeholder="John Doe" value={formData.guestName} onChange={val => setFormData({...formData, guestName: val})} required />
+                            <Input
+                                label="Guest Full Name"
+                                placeholder="John Doe"
+                                value={formData.guestName}
+                                onChange={val => setFormData({...formData, guestName: val})}
+                                required
+                            />
 
-                            {activeModal === 'book' && (
-                                <>
-                                    <Input label="Phone Number" placeholder="+1 234..." value={formData.phoneNumber} onChange={val => setFormData({...formData, phoneNumber: val})} required />
-                                    <Input label="Total People" type="number" value={formData.numberOfPeople} onChange={val => setFormData({...formData, numberOfPeople: val})} />
-                                </>
-                            )}
+                            {/* This input now appears for both Booking and Walk-in */}
+                            <Input
+                                label="Phone Number"
+                                placeholder="+1 234..."
+                                value={formData.phoneNumber}
+                                onChange={val => setFormData({...formData, phoneNumber: val})}
+                                required
+                            />
 
                             <div className="flex gap-3 pt-4">
                                 <button type="button" onClick={closeModals} className="flex-1 px-4 py-3 border border-slate-200 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
@@ -208,7 +237,8 @@ const Badge = ({ status }) => {
     const styles = {
         Available: "bg-green-100 text-green-700 border-green-200",
         Reserved: "bg-amber-100 text-amber-700 border-amber-200",
-        Occupied: "bg-rose-100 text-rose-700 border-rose-200"
+        Occupied: "bg-rose-100 text-rose-700 border-rose-200",
+        Cleaning: "bg-blue-100 text-blue-700 border-blue-200" // Add this line
     };
     return <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border shadow-sm ${styles[status]}`}>{status}</span>;
 };

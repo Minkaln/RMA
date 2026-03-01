@@ -31,8 +31,7 @@ public class ReservationController {
 
         Reservation res = new Reservation();
         res.setGuestName(request.getGuestName());
-        res.setPhoneNumber(request.getPhoneNumber());     // Error should disappear now
-        res.setNumberOfPeople(request.getNumberOfPeople()); // Error should disappear now
+        res.setPhoneNumber(request.getPhoneNumber());
         res.setRoom(room);
 
         return reservationRepository.save(res);
@@ -74,10 +73,35 @@ public class ReservationController {
     public Room checkOut(@PathVariable Long id) {
         Room room = roomRepository.findById(id).orElseThrow();
 
-        room.setStatus("Available");
+        room.setStatus("Cleaning");
         room.setLastCheckOutTime(LocalDateTime.now());
         room.setCurrentCheckInTime(null);
         room.setGuestName(null);
+
+        return roomRepository.save(room);
+    }
+    @PostMapping("/{roomId}/check-in-direct")
+    public Room checkInDirect(@PathVariable Long roomId, @RequestBody ReservationRequest request) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        if (!"Available".equals(room.getStatus())) {
+            throw new RuntimeException("Room is not available for direct check-in");
+        }
+
+        // 1. Create the Reservation record
+        Reservation res = new Reservation();
+        res.setGuestName(request.getGuestName());
+        res.setPhoneNumber(request.getPhoneNumber()); // 👈 Add this line
+        res.setRoom(room);
+        res.setReservationStatus("Direct-Check-In");
+        reservationRepository.save(res);
+
+        // 2. Update Room status
+        room.setStatus("Occupied");
+        room.setGuestName(request.getGuestName());
+        room.setCurrentCheckInTime(LocalDateTime.now());
+        // If your Room model has a phoneNumber field, add: room.setPhoneNumber(request.getPhoneNumber());
 
         return roomRepository.save(room);
     }

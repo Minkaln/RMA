@@ -18,7 +18,6 @@ public class Reservation {
     private LocalDateTime checkOutTime;
 
     private String phoneNumber;
-    private Integer numberOfPeople;
     private String reservationStatus;
 
     // Inside Reservation.java

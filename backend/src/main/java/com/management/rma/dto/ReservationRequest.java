@@ -3,8 +3,7 @@ package com.management.rma.dto;
 public class ReservationRequest {
     private Long roomId;
     private String guestName;
-    private String phoneNumber;   // New field
-    private int numberOfPeople;   // New field
+    private String phoneNumber;
 
     // Existing Getters and Setters
     public Long getRoomId() { return roomId; }
@@ -17,6 +16,4 @@ public class ReservationRequest {
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
-    public int getNumberOfPeople() { return numberOfPeople; }
-    public void setNumberOfPeople(int numberOfPeople) { this.numberOfPeople = numberOfPeople; }
 }

@@ -34,22 +34,15 @@ public class RoomController {
         }
         return ResponseEntity.ok(roomRepository.save(room));
     }
-    @PostMapping("/{id}/check-in-direct")
-    public ResponseEntity<Room> checkInDirect(@PathVariable Long id, @RequestBody Map<String, String> details) {
-        // 1. Find the room by ID
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
-
-        // 2. Update the room info directly
-        room.setStatus("Occupied");
-        room.setGuestName(details.get("guestName"));
-        room.setCurrentCheckInTime(LocalDateTime.now());
-
-        // 3. Save and return the updated room
-        return ResponseEntity.ok(roomRepository.save(room));
-    }
     @DeleteMapping("/{id}") // Handles "Deleting" a room by its ID
     public void deleteRoom(@PathVariable Long id) {
         roomRepository.deleteById(id);
     }
+    @PutMapping("/{id}/clean")
+    public Room markCleaned(@PathVariable Long id) {
+        Room room = roomRepository.findById(id).orElseThrow();
+        room.setStatus("Available"); // 👈 This moves it from Cleaning to Available
+        return roomRepository.save(room);
+    }
+
 }

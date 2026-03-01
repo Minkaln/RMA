@@ -24,7 +24,6 @@ public class Room {
     private String roomNumber;
 
     private String phoneNumber;
-    private Integer numberOfPeople;
     private String type;
     private String status; // Keep this (e.g., "Available", "Occupied")
 
