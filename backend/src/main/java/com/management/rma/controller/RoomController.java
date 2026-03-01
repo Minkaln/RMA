@@ -1,5 +1,6 @@
 package com.management.rma.controller;
 
+import com.management.rma.dto.RoomRequest;
 import com.management.rma.model.Room;
 import com.management.rma.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,6 @@ public class RoomController {
     public List<Room> getAllRooms() {
         return roomRepository.findAll();
     }
-
     // Inside RoomController.java
     @PostMapping
     public ResponseEntity<?> addRoom(@RequestBody Room room) {

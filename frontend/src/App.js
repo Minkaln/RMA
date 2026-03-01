@@ -42,21 +42,24 @@ function App() {
         setFormData({ guestName: '', phoneNumber: '', supplyItem: '' });
     };
 
-    // UPDATED: Submit supply request as text
     const submitSupplyRequest = (e) => {
         e.preventDefault();
-        // Here you would typically send formData.supplyItem to your backend
-        // For now, we update local state to simulate the "Request" being saved
-        const updatedRooms = rooms.map(r =>
-            r.id === selectedRoomId ? { ...r, currentRequest: formData.supplyItem } : r
-        );
-        setRooms(updatedRooms);
-        alert(`Request for "${formData.supplyItem}" logged for Room.`);
-        closeModals();
+        const requestData = {
+            roomId: selectedRoomId,
+            requestMessage: formData.supplyItem
+        };
+
+        axios.post('http://localhost:8080/api/rooms/request', requestData)
+            .then(() => {
+                fetchRooms();
+                closeModals();
+            })
+            .catch(err => alert("Failed to send request: " + err.message));
     };
 
-    // NEW: Clear request once handled
     const clearRequest = (roomId) => {
+        // Logic to clear request via backend if endpoint exists,
+        // otherwise this local update will be overwritten on next fetch.
         const updatedRooms = rooms.map(r =>
             r.id === roomId ? { ...r, currentRequest: null } : r
         );
@@ -78,9 +81,29 @@ function App() {
         }).then(() => { fetchRooms(); closeModals(); }).catch(err => alert("Direct check-in failed"));
     };
 
-    const handleCheckIn = (roomId) => axios.put(`http://localhost:8080/api/reservations/${roomId}/check-in`).then(() => fetchRooms());
-    const handleCheckOut = (roomId) => axios.put(`http://localhost:8080/api/reservations/${roomId}/check-out`).then(() => fetchRooms());
-    const handleMarkCleaned = (roomId) => axios.put(`http://localhost:8080/api/rooms/${roomId}/clean`).then(() => fetchRooms());
+    const handleCheckIn = (roomId) => {
+        axios.put(`http://localhost:8080/api/reservations/${roomId}/check-in`)
+            .then(() => fetchRooms())
+            .catch(err => alert("Check-in failed: " + err.message));
+    };
+
+    const handleCheckOut = (roomId) => {
+        axios.put(`http://localhost:8080/api/reservations/${roomId}/check-out`)
+            .then(() => fetchRooms());
+    };
+
+    const handleCancel = (roomId) => {
+        if (window.confirm("Are you sure you want to cancel this reservation?")) {
+            axios.put(`http://localhost:8080/api/reservations/${roomId}/cancel`)
+                .then(() => fetchRooms())
+                .catch(err => alert("Cancellation failed: " + err.message));
+        }
+    };
+
+    const handleMarkCleaned = (roomId) => {
+        axios.put(`http://localhost:8080/api/rooms/${roomId}/clean`)
+            .then(() => fetchRooms());
+    };
 
     const handleAddRoom = (e) => {
         e.preventDefault();
@@ -152,7 +175,6 @@ function App() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="font-bold text-slate-800">Room {room.roomNumber}</div>
-                                                {/* NEW: Room Request Badge on main row */}
                                                 {room.currentRequest && (
                                                     <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
                                                 )}
@@ -194,19 +216,28 @@ function App() {
                                                     </div>
 
                                                     <div className="flex flex-wrap gap-2 justify-end bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
+                                                        {/* Request Button - Always Visible */}
                                                         <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('supply')}} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all">📦 Request</button>
+
+                                                        {/* FIXED: Reserved Status Actions */}
+                                                        {room.status === 'Reserved' && (
+                                                            <>
+                                                                <button onClick={(e) => {e.stopPropagation(); handleCheckIn(room.id)}} className="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600">Check In</button>
+                                                                <button onClick={(e) => {e.stopPropagation(); handleCancel(room.id)}} className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-bold hover:bg-rose-100">Cancel</button>
+                                                            </>
+                                                        )}
 
                                                         {room.status === 'Available' && (
                                                             <>
-                                                                <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('book')}} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold">Book</button>
-                                                                <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('direct')}} className="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold">Walk-in</button>
+                                                                <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('book')}} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700">Book</button>
+                                                                <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('direct')}} className="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700">Walk-in</button>
                                                             </>
                                                         )}
                                                         {room.status === 'Occupied' && (
-                                                            <button onClick={(e) => {e.stopPropagation(); handleCheckOut(room.id)}} className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold">Check Out</button>
+                                                            <button onClick={(e) => {e.stopPropagation(); handleCheckOut(room.id)}} className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-black">Check Out</button>
                                                         )}
                                                         {room.status === 'Cleaning' && (
-                                                            <button onClick={(e) => {e.stopPropagation(); handleMarkCleaned(room.id)}} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">✨ Mark Clean</button>
+                                                            <button onClick={(e) => {e.stopPropagation(); handleMarkCleaned(room.id)}} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700">✨ Mark Clean</button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -239,8 +270,8 @@ function App() {
                                 </>
                             )}
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={closeModals} className="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-slate-500">Cancel</button>
-                                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700">
+                                <button type="button" onClick={closeModals} className="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
+                                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all">
                                     {activeModal === 'supply' ? 'Send Request' : 'Confirm'}
                                 </button>
                             </div>
