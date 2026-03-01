@@ -25,7 +25,7 @@ public class Room {
 
     private String phoneNumber;
     private String type;
-    private String status; // Keep this (e.g., "Available", "Occupied")
+    private String status;
 
     public Room(String roomNumber, String type, Double price, String status) {
         this.roomNumber = roomNumber;

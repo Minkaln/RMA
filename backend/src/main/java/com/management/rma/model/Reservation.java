@@ -23,6 +23,6 @@ public class Reservation {
     // Inside Reservation.java
     @ManyToOne
     @JoinColumn(name = "room_id")
-    @JsonBackReference // This tells Jackson: "Stop here, don't go back into Room"
+    @JsonBackReference
     private Room room;
 }

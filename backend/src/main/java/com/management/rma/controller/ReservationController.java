@@ -7,7 +7,8 @@ import com.management.rma.repository.ReservationRepository;
 import com.management.rma.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 @RestController
@@ -30,6 +31,7 @@ public class ReservationController {
         roomRepository.save(room);
 
         Reservation res = new Reservation();
+        // JSON body handles spaces automatically
         res.setGuestName(request.getGuestName());
         res.setPhoneNumber(request.getPhoneNumber());
         res.setRoom(room);
@@ -37,16 +39,21 @@ public class ReservationController {
         return reservationRepository.save(res);
     }
 
-    @PutMapping("/{resId}/cancel")
-    public void cancelReservation(@PathVariable Long resId) {
-        Reservation res = reservationRepository.findById(resId).orElseThrow();
-        res.setReservationStatus("Cancelled");
+    @PutMapping("/room/{roomId}/cancel")
+    public Room cancelByRoom(@PathVariable Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        Room room = res.getRoom();
-        room.setStatus("Available"); // Free the room
+        Reservation res = reservationRepository.findAll().stream()
+                .filter(r -> r.getRoom().getId().equals(roomId) && "Reserved".equals(room.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No active reservation to cancel"));
+
+        res.setReservationStatus("Cancelled");
+        room.setStatus("Available");
 
         reservationRepository.save(res);
-        roomRepository.save(room);
+        return roomRepository.save(room);
     }
 
     @PutMapping("/{id}/check-in")
@@ -59,7 +66,13 @@ public class ReservationController {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No active reservation found for this room"));
 
-        room.setGuestName(res.getGuestName());
+        // If the name was somehow encoded with %20, this decodes it back to a space
+        String name = res.getGuestName();
+        if (name != null && name.contains("%20")) {
+            name = URLDecoder.decode(name, StandardCharsets.UTF_8);
+        }
+
+        room.setGuestName(name);
         room.setStatus("Occupied");
         room.setCurrentCheckInTime(LocalDateTime.now());
 
@@ -80,6 +93,7 @@ public class ReservationController {
 
         return roomRepository.save(room);
     }
+
     @PostMapping("/{roomId}/check-in-direct")
     public Room checkInDirect(@PathVariable Long roomId, @RequestBody ReservationRequest request) {
         Room room = roomRepository.findById(roomId)
@@ -92,7 +106,7 @@ public class ReservationController {
         // 1. Create the Reservation record
         Reservation res = new Reservation();
         res.setGuestName(request.getGuestName());
-        res.setPhoneNumber(request.getPhoneNumber()); // 👈 Add this line
+        res.setPhoneNumber(request.getPhoneNumber());
         res.setRoom(room);
         res.setReservationStatus("Direct-Check-In");
         reservationRepository.save(res);
@@ -101,7 +115,6 @@ public class ReservationController {
         room.setStatus("Occupied");
         room.setGuestName(request.getGuestName());
         room.setCurrentCheckInTime(LocalDateTime.now());
-        // If your Room model has a phoneNumber field, add: room.setPhoneNumber(request.getPhoneNumber());
 
         return roomRepository.save(room);
     }

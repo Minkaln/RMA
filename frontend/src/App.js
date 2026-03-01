@@ -5,14 +5,12 @@ function App() {
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newRoom, setNewRoom] = useState({ roomNumber: '', type: 'Single', status: 'Available' });
+    const [expandedRoomId, setExpandedRoomId] = useState(null);
 
     // Modal States
-    const [activeModal, setActiveModal] = useState(null); // 'book' or 'direct'
+    const [activeModal, setActiveModal] = useState(null);
     const [selectedRoomId, setSelectedRoomId] = useState(null);
-    const [formData, setFormData] = useState({
-        guestName: '',
-        phoneNumber: ''
-    });
+    const [formData, setFormData] = useState({ guestName: '', phoneNumber: '' });
 
     const fetchRooms = () => {
         setLoading(true);
@@ -29,6 +27,16 @@ function App() {
 
     useEffect(() => { fetchRooms(); }, []);
 
+    const toggleExpand = (id) => {
+        setExpandedRoomId(expandedRoomId === id ? null : id);
+    };
+
+    const formatDateTime = (dateString) => {
+        if (!dateString) return <span className="text-slate-300">No record</span>;
+        const date = new Date(dateString);
+        return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
     // --- Action Handlers ---
     const closeModals = () => {
         setActiveModal(null);
@@ -40,50 +48,41 @@ function App() {
         e.preventDefault();
         axios.post('http://localhost:8080/api/reservations/book', {
             roomId: selectedRoomId, ...formData
-        }).then(() => {
-            fetchRooms();
-            closeModals();
-        }).catch(() => alert("Error booking room"));
+        }).then(() => { fetchRooms(); closeModals(); }).catch(() => alert("Error booking room"));
     };
 
     const submitDirectCheckIn = (e) => {
         e.preventDefault();
         axios.post(`http://localhost:8080/api/reservations/${selectedRoomId}/check-in-direct`, {
             guestName: formData.guestName,
-            phoneNumber: formData.phoneNumber // 👈 Add this line
-        })
-            .then(() => {
-                fetchRooms();
-                closeModals();
-            })
-            .catch(err => alert("Direct check-in failed: " + err.message));
+            phoneNumber: formData.phoneNumber
+        }).then(() => { fetchRooms(); closeModals(); }).catch(err => alert("Direct check-in failed"));
     };
 
     const handleCheckIn = (roomId) => axios.put(`http://localhost:8080/api/reservations/${roomId}/check-in`).then(() => fetchRooms());
     const handleCheckOut = (roomId) => axios.put(`http://localhost:8080/api/reservations/${roomId}/check-out`).then(() => fetchRooms());
+    const handleMarkCleaned = (roomId) => axios.put(`http://localhost:8080/api/rooms/${roomId}/clean`).then(() => fetchRooms());
+    const handleCancel = (roomId) => {
+        if (window.confirm("Cancel this reservation?")) {
+            axios.put(`http://localhost:8080/api/reservations/room/${roomId}/cancel`).then(() => fetchRooms());
+        }
+    };
+    const handleDelete = (id) => {
+        if (window.confirm("Delete room?")) {
+            axios.delete(`http://localhost:8080/api/rooms/${id}`).then(() => fetchRooms());
+        }
+    };
 
     const handleAddRoom = (e) => {
         e.preventDefault();
         axios.post('http://localhost:8080/api/rooms', newRoom)
-            .then(() => {
-                fetchRooms();
-                setNewRoom({ roomNumber: '', type: 'Single', status: 'Available' });
-            }).catch(err => alert(err.response?.data || "Error"));
+            .then(() => { fetchRooms(); setNewRoom({ roomNumber: '', type: 'Single', status: 'Available' }); })
+            .catch(err => alert("Error adding room"));
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm("Delete this room?")) {
-            axios.delete(`http://localhost:8080/api/rooms/${id}`).then(() => fetchRooms());
-        }
-    };
-    const handleMarkCleaned = (roomId) => {
-        axios.put(`http://localhost:8080/api/rooms/${roomId}/clean`)
-            .then(() => fetchRooms())
-            .catch(err => console.error("Cleaning update failed", err));
-    };
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
-            {/* Header / Stats Section */}
+            {/* Header */}
             <div className="bg-white border-b border-slate-200 mb-8 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div>
@@ -100,122 +99,110 @@ function App() {
             </div>
 
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Sidebar: Add Room */}
+                {/* Sidebar */}
                 <aside className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-8">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <span className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">➕</span> Add New Room
-                        </h3>
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">Add New Room</h3>
                         <form onSubmit={handleAddRoom} className="space-y-4">
-                            <Input label="Room Number" placeholder="101" value={newRoom.roomNumber} onChange={val => setNewRoom({...newRoom, roomNumber: val})} />
-                            <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Type</label>
-                                <select
-                                    className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
-                                    value={newRoom.type} onChange={e => setNewRoom({...newRoom, type: e.target.value})}
-                                >
-                                    <option value="Single">Single</option>
-                                    <option value="Double">Double</option>
-                                    <option value="Suite">Suite</option>
-                                </select>
-                            </div>
-                            <button className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all">Create Room</button>
+                            <Input label="Room Number" value={newRoom.roomNumber} onChange={val => setNewRoom({...newRoom, roomNumber: val})} />
+                            <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={newRoom.type} onChange={e => setNewRoom({...newRoom, type: e.target.value})}>
+                                <option value="Single">Single</option>
+                                <option value="Double">Double</option>
+                                <option value="Suite">Suite</option>
+                            </select>
+                            <button className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700">Create</button>
                         </form>
                     </div>
                 </aside>
 
-                {/* Main Table */}
+                {/* Compact Table */}
                 <main className="lg:col-span-3">
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                            <h3 className="font-bold flex items-center gap-2 text-slate-700"><span>🏨</span> Live Room Matrix</h3>
-                            <button onClick={fetchRooms} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400" title="Refresh">🔄</button>
-                        </div>
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest border-b border-slate-100">
+                            <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest">
                             <tr>
-                                <th className="px-6 py-4">Room Info</th>
+                                <th className="px-6 py-4">Room Info</th> {/* Label updated */}
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Current Guest</th>
-                                <th className="px-6 py-4 text-right">Operations</th>
+                                <th className="px-6 py-4">Guest</th>
+                                <th className="px-6 py-4 text-right">Details</th>
                             </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                             {rooms.map(room => (
-                                <tr key={room.id} className="hover:bg-slate-50/80 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-slate-800">Room {room.roomNumber}</div>
-                                        <div className="text-xs text-slate-400">{room.type}</div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <Badge status={room.status} />
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="text-sm font-semibold text-slate-600">{room.guestName || <span className="text-slate-300 font-normal italic">—</span>}</div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex justify-end gap-2">
-                                            {room.status === 'Available' && (
-                                                <>
-                                                    <button onClick={() => {setSelectedRoomId(room.id); setActiveModal('book')}} className="px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 shadow-sm transition-all">Book</button>
-                                                    <button onClick={() => {setSelectedRoomId(room.id); setActiveModal('direct')}} className="px-4 py-1.5 bg-teal-50 text-teal-600 border border-teal-100 text-xs font-bold rounded-lg hover:bg-teal-100 transition-all">Walk-in</button>
-                                                </>
-                                            )}
-                                            {room.status === 'Reserved' && (
-                                                <button onClick={() => handleCheckIn(room.id)} className="px-4 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-600 transition-all">Check In</button>
-                                            )}
-                                            {room.status === 'Occupied' && (
-                                                <button onClick={() => handleCheckOut(room.id)} className="px-4 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-black transition-all">Check Out</button>
-                                            )}
-                                            {room.status === 'Cleaning' && (
-                                                <button
-                                                    onClick={() => handleMarkCleaned(room.id)}
-                                                    className="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all"
-                                                >
-                                                    ✨ Mark Cleaned
-                                                </button>
-                                            )}
-                                            <button onClick={() => handleDelete(room.id)} className="ml-2 p-1 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">🗑</button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <React.Fragment key={room.id}>
+                                    <tr
+                                        onClick={() => toggleExpand(room.id)}
+                                        className={`cursor-pointer transition-colors ${expandedRoomId === room.id ? 'bg-indigo-50/30' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <td className="px-6 py-4">
+                                            {/* Room Type moved here */}
+                                            <div className="font-bold text-slate-800">Room {room.roomNumber}</div>
+                                            <div className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">{room.type}</div>
+                                        </td>
+                                        <td className="px-6 py-4"><Badge status={room.status} /></td>
+                                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">{room.guestName || <span className="text-slate-300 font-normal italic">—</span>}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className={`text-slate-400 transition-transform inline-block ${expandedRoomId === room.id ? 'rotate-180' : ''}`}>▼</span>
+                                        </td>
+                                    </tr>
+
+                                    {/* Dropdown Section */}
+                                    {expandedRoomId === room.id && (
+                                        <tr className="bg-slate-50/50">
+                                            <td colSpan="4" className="px-8 py-6 border-l-4 border-indigo-500 shadow-inner">
+                                                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-6 w-full md:w-auto">
+                                                        <DetailItem label="Guest Phone" value={room.phoneNumber || 'N/A'} />
+                                                        <DetailItem label="Check-In Time" value={formatDateTime(room.currentCheckInTime)} />
+                                                        <DetailItem label="Last Check-Out" value={formatDateTime(room.lastCheckOutTime)} />
+                                                        <DetailItem label="Internal ID" value={`#${room.id}`} />
+                                                    </div>
+
+                                                    {/* Actions Panel */}
+                                                    <div className="flex flex-wrap gap-2 justify-end bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+                                                        {room.status === 'Available' && (
+                                                            <>
+                                                                <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('book')}} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all">Book</button>
+                                                                <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('direct')}} className="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700 transition-all">Walk-in</button>
+                                                            </>
+                                                        )}
+                                                        {room.status === 'Reserved' && (
+                                                            <>
+                                                                <button onClick={(e) => {e.stopPropagation(); handleCheckIn(room.id)}} className="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600">Check In</button>
+                                                                <button onClick={(e) => {e.stopPropagation(); handleCancel(room.id)}} className="px-5 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold">Cancel</button>
+                                                            </>
+                                                        )}
+                                                        {room.status === 'Occupied' && (
+                                                            <button onClick={(e) => {e.stopPropagation(); handleCheckOut(room.id)}} className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold">Check Out</button>
+                                                        )}
+                                                        {room.status === 'Cleaning' && (
+                                                            <button onClick={(e) => {e.stopPropagation(); handleMarkCleaned(room.id)}} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold">✨ Done Cleaning</button>
+                                                        )}
+                                                        <button onClick={(e) => {e.stopPropagation(); handleDelete(room.id)}} className="p-2.5 text-slate-300 hover:text-rose-500 transition-colors">🗑</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
                             ))}
                             </tbody>
                         </table>
-                        {rooms.length === 0 && <div className="p-20 text-center text-slate-400">Inventory is empty. Add a room to start.</div>}
                     </div>
                 </main>
             </div>
 
-            {/* --- CUSTOM MODALS --- */}
-            {/* --- CUSTOM MODALS --- */}
+            {/* Modals remain the same */}
             {activeModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 transform transition-all animate-in fade-in zoom-in duration-200">
-                        <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
-                            {activeModal === 'book' ? '📅 Room Reservation' : '⚡ Direct Check-in'}
-                        </h2>
+                    <div className="bg-white w-full max-w-md rounded-2xl p-8 animate-in fade-in zoom-in duration-200">
+                        <h2 className="text-2xl font-black mb-6">{activeModal === 'book' ? '📅 Reservation' : '⚡ Direct Check-in'}</h2>
                         <form onSubmit={activeModal === 'book' ? submitBooking : submitDirectCheckIn} className="space-y-4">
-                            <Input
-                                label="Guest Full Name"
-                                placeholder="John Doe"
-                                value={formData.guestName}
-                                onChange={val => setFormData({...formData, guestName: val})}
-                                required
-                            />
-
-                            {/* This input now appears for both Booking and Walk-in */}
-                            <Input
-                                label="Phone Number"
-                                placeholder="+1 234..."
-                                value={formData.phoneNumber}
-                                onChange={val => setFormData({...formData, phoneNumber: val})}
-                                required
-                            />
-
+                            <Input label="Guest Name" value={formData.guestName} onChange={val => setFormData({...formData, guestName: val})} required />
+                            <Input label="Phone Number" value={formData.phoneNumber} onChange={val => setFormData({...formData, phoneNumber: val})} required />
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={closeModals} className="flex-1 px-4 py-3 border border-slate-200 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all">Confirm</button>
+                                <button type="button" onClick={closeModals} className="flex-1 py-3 border rounded-xl font-bold text-slate-500">Cancel</button>
+                                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold">Confirm</button>
                             </div>
                         </form>
                     </div>
@@ -225,9 +212,9 @@ function App() {
     );
 }
 
-// Sub-components for cleaner code
+// Stats & Sub-components stay exactly as you have them...
 const StatCard = ({ label, count, color }) => (
-    <div className="bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100 flex flex-col items-center min-w-[100px]">
+    <div className="bg-slate-50 px-6 py-3 rounded-2xl border flex flex-col items-center min-w-[100px]">
         <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{label}</span>
         <span className={`text-2xl font-black ${color}`}>{count}</span>
     </div>
@@ -238,22 +225,22 @@ const Badge = ({ status }) => {
         Available: "bg-green-100 text-green-700 border-green-200",
         Reserved: "bg-amber-100 text-amber-700 border-amber-200",
         Occupied: "bg-rose-100 text-rose-700 border-rose-200",
-        Cleaning: "bg-blue-100 text-blue-700 border-blue-200" // Add this line
+        Cleaning: "bg-blue-100 text-blue-700 border-blue-200"
     };
     return <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border shadow-sm ${styles[status]}`}>{status}</span>;
 };
 
+const DetailItem = ({ label, value }) => (
+    <div className="flex flex-col min-w-[140px]">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{label}</span>
+        <span className="text-sm font-bold text-slate-700">{value}</span>
+    </div>
+);
+
 const Input = ({ label, onChange, ...props }) => (
     <div>
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
-            {label}
-        </label>
-        <input
-            className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
-            {...props}
-            // 👈 Extract the value from the event before passing it up
-            onChange={(e) => onChange(e.target.value)}
-        />
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>
+        <input className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" {...props} onChange={(e) => onChange(e.target.value)} />
     </div>
 );
 
