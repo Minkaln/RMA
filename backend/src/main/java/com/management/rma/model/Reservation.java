@@ -17,6 +17,10 @@ public class Reservation {
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 
+    private String phoneNumber;
+    private Integer numberOfPeople;
+    private String reservationStatus; // "Active", "Cancelled", "Completed"
+
     // Inside Reservation.java
     @ManyToOne
     @JoinColumn(name = "room_id")

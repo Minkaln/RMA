@@ -23,17 +23,31 @@ public class ReservationController {
 
     @PostMapping("/book")
     public Reservation bookRoom(@RequestBody ReservationRequest request) {
-        Room room = roomRepository.findById(request.getRoomId()).orElseThrow();
+        Room room = roomRepository.findById(request.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        // When someone books, it becomes 'Reserved'
         room.setStatus("Reserved");
         roomRepository.save(room);
 
         Reservation res = new Reservation();
         res.setGuestName(request.getGuestName());
-        res.setCheckInTime(LocalDateTime.now());
+        res.setPhoneNumber(request.getPhoneNumber());     // Error should disappear now
+        res.setNumberOfPeople(request.getNumberOfPeople()); // Error should disappear now
         res.setRoom(room);
+
         return reservationRepository.save(res);
+    }
+
+    @PutMapping("/{resId}/cancel")
+    public void cancelReservation(@PathVariable Long resId) {
+        Reservation res = reservationRepository.findById(resId).orElseThrow();
+        res.setReservationStatus("Cancelled");
+
+        Room room = res.getRoom();
+        room.setStatus("Available"); // Free the room
+
+        reservationRepository.save(res);
+        roomRepository.save(room);
     }
 
     @PutMapping("/{id}/check-in")
