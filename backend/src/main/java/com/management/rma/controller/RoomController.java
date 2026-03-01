@@ -48,8 +48,20 @@ public class RoomController {
         // 3. Save and return the updated room
         return ResponseEntity.ok(roomRepository.save(room));
     }
-    @DeleteMapping("/{id}") // Handles "Deleting" a room by its ID
-    public void deleteRoom(@PathVariable Long id) {
-        roomRepository.deleteById(id);
+    @DeleteMapping("/{id}")
+    @org.springframework.transaction.annotation.Transactional // 👈 Ensure this is here
+    public ResponseEntity<?> deleteRoom(@PathVariable Long id) {
+        try {
+            if (!roomRepository.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // This will now work because orphanRemoval=true is in your Room.java
+            roomRepository.deleteById(id);
+
+            return ResponseEntity.ok().body(Map.of("message", "Deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Server Error: " + e.getMessage());
+        }
     }
 }

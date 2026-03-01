@@ -1,40 +1,40 @@
 package com.management.rma.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "rooms")
-@Data
-@NoArgsConstructor // Creates the empty constructor for JPA
+@Getter
+@Setter
+@NoArgsConstructor
 public class Room {
-    private String guestName;
-    private LocalDateTime currentCheckInTime; // Set when guest checks in
-    private LocalDateTime lastCheckOutTime;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
     private String roomNumber;
-
     private String type;
-    private String status; // Keep this (e.g., "Available", "Occupied")
+    private String status;
+    private String guestName;
+    private LocalDateTime currentCheckInTime;
+    private LocalDateTime lastCheckOutTime;
 
-    // Manual Constructor for the DataLoader
-    public Room(String roomNumber, String type, Double price, String status) {
+    // Fix: Remove 'Double price' because it doesn't exist in your fields
+    public Room(String roomNumber, String type, String status) {
         this.roomNumber = roomNumber;
         this.type = type;
         this.status = status;
     }
 
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
-    @JsonManagedReference // This is the "Forward" part
+    // Change this line in your Room.java
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true) // 👈 Add orphanRemoval = true
+    @JsonIgnore
     private List<Reservation> reservations;
-
 }

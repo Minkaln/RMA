@@ -38,23 +38,30 @@ public class ReservationController {
         return reservationRepository.save(res);
     }
 
-    @PutMapping("/{resId}/cancel")
-    public void cancelReservation(@PathVariable Long resId) {
-        Reservation res = reservationRepository.findById(resId).orElseThrow();
-        res.setReservationStatus("Cancelled");
+    @PutMapping("/{roomId}/cancel")
+    public void cancelReservation(@PathVariable Long roomId) {
+        // Find the room
+        Room room = roomRepository.findById(roomId).orElseThrow();
 
-        Room room = res.getRoom();
-        room.setStatus("Available"); // Free the room
+        // Find the latest reservation for this room that isn't checked out/cancelled
+        Reservation res = reservationRepository.findAll().stream()
+                .filter(r -> r.getRoom().getId().equals(roomId) && !"Cancelled".equals(r.getReservationStatus()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No active reservation found for this room"));
+
+        res.setReservationStatus("Cancelled");
+        room.setStatus("Available");
 
         reservationRepository.save(res);
         roomRepository.save(room);
     }
 
-    @PutMapping("/{id}/check-in")
-    public Room checkIn(@PathVariable Long id) {
-        Room room = roomRepository.findById(id).orElseThrow();
+    @PutMapping("/{roomId}/check-in")
+    public Room checkIn(@PathVariable Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
         room.setStatus("Occupied");
-        room.setCurrentCheckInTime(LocalDateTime.now()); // Record the start
+        room.setCurrentCheckInTime(LocalDateTime.now());
         return roomRepository.save(room);
     }
 
