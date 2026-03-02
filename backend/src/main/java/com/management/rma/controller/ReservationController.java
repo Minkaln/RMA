@@ -7,8 +7,6 @@ import com.management.rma.repository.ReservationRepository;
 import com.management.rma.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 @RestController
@@ -31,10 +29,10 @@ public class ReservationController {
         roomRepository.save(room);
 
         Reservation res = new Reservation();
-        // JSON body handles spaces automatically
         res.setGuestName(request.getGuestName());
         res.setPhoneNumber(request.getPhoneNumber());
         res.setRoom(room);
+        // Note: reservationStatus is null for "Reserved" bookings
 
         return reservationRepository.save(res);
     }
@@ -44,8 +42,11 @@ public class ReservationController {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
+        // Find reservation with null status (Reserved) or Reserved status
         Reservation res = reservationRepository.findAll().stream()
-                .filter(r -> r.getRoom().getId().equals(roomId) && "Reserved".equals(room.getStatus()))
+                .filter(r -> r.getRoom().getId().equals(roomId) &&
+                        (r.getReservationStatus() == null ||
+                                r.getReservationStatus().equals("Reserved")))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No active reservation to cancel"));
 
@@ -61,19 +62,16 @@ public class ReservationController {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
+        // Find reservation with null status (newly booked) OR Reserved status
         Reservation res = reservationRepository.findAll().stream()
-                .filter(r -> r.getRoom().getId().equals(id) && !"Cancelled".equals(r.getReservationStatus()))
+                .filter(r -> r.getRoom().getId().equals(id) &&
+                        (r.getReservationStatus() == null ||
+                                r.getReservationStatus().equals("Reserved")) &&
+                        !"Cancelled".equals(r.getReservationStatus()) &&
+                        !"Checked-Out".equals(r.getReservationStatus()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No active reservation found for this room"));
 
-        // If the name was somehow encoded with %20, this decodes it back to a space
-        String name = res.getGuestName();
-        if (name != null && name.contains("%20")) {
-            name = URLDecoder.decode(name, StandardCharsets.UTF_8);
-        }
-
-        room.setGuestName(name);
-        room.setPhoneNumber(res.getPhoneNumber());
         room.setStatus("Occupied");
         room.setCurrentCheckInTime(LocalDateTime.now());
 
@@ -85,13 +83,25 @@ public class ReservationController {
 
     @PutMapping("/{id}/check-out")
     public Room checkOut(@PathVariable Long id) {
-        Room room = roomRepository.findById(id).orElseThrow();
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        // Mark the active reservation as Checked-Out
+        Reservation activeRes = reservationRepository.findAll().stream()
+                .filter(r -> r.getRoom().getId().equals(id) &&
+                        (r.getReservationStatus().equals("Checked-In") ||
+                                r.getReservationStatus().equals("Direct-Check-In")))
+                .findFirst()
+                .orElse(null);
+
+        if (activeRes != null) {
+            activeRes.setReservationStatus("Checked-Out");
+            reservationRepository.save(activeRes);
+        }
 
         room.setStatus("Cleaning");
         room.setLastCheckOutTime(LocalDateTime.now());
         room.setCurrentCheckInTime(null);
-        room.setGuestName(null);
-        room.setPhoneNumber(null);
 
         return roomRepository.save(room);
     }
@@ -113,8 +123,6 @@ public class ReservationController {
         reservationRepository.save(res);
 
         room.setStatus("Occupied");
-        room.setGuestName(request.getGuestName());
-        room.setPhoneNumber(request.getPhoneNumber());
         room.setCurrentCheckInTime(LocalDateTime.now());
 
         return roomRepository.save(room);
