@@ -73,6 +73,7 @@ public class ReservationController {
         }
 
         room.setGuestName(name);
+        room.setPhoneNumber(res.getPhoneNumber());
         room.setStatus("Occupied");
         room.setCurrentCheckInTime(LocalDateTime.now());
 
@@ -90,6 +91,7 @@ public class ReservationController {
         room.setLastCheckOutTime(LocalDateTime.now());
         room.setCurrentCheckInTime(null);
         room.setGuestName(null);
+        room.setPhoneNumber(null);
 
         return roomRepository.save(room);
     }
@@ -103,7 +105,6 @@ public class ReservationController {
             throw new RuntimeException("Room is not available for direct check-in");
         }
 
-        // 1. Create the Reservation record
         Reservation res = new Reservation();
         res.setGuestName(request.getGuestName());
         res.setPhoneNumber(request.getPhoneNumber());
@@ -111,9 +112,9 @@ public class ReservationController {
         res.setReservationStatus("Direct-Check-In");
         reservationRepository.save(res);
 
-        // 2. Update Room status
         room.setStatus("Occupied");
         room.setGuestName(request.getGuestName());
+        room.setPhoneNumber(request.getPhoneNumber());
         room.setCurrentCheckInTime(LocalDateTime.now());
 
         return roomRepository.save(room);
