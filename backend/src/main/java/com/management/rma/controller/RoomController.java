@@ -3,46 +3,67 @@ package com.management.rma.controller;
 import com.management.rma.dto.RoomRequest;
 import com.management.rma.model.Room;
 import com.management.rma.repository.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rooms")
-@CrossOrigin(origins = "http://localhost:3000") // Allows React to talk to Java
+@CrossOrigin(origins = "http://localhost:3000")
 public class RoomController {
-    @Autowired
-    private RoomRepository roomRepository;
+
+    private final RoomRepository roomRepository;
+
+    // Constructor injection for the Repository
+    public RoomController(RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
+    }
 
     @GetMapping
     public List<Room> getAllRooms() {
         return roomRepository.findAll();
     }
-    // Inside RoomController.java
+
+    // This handles the 📦 Request button from React
+    @PostMapping("/request")
+    public ResponseEntity<Room> handleRoomRequest(@RequestBody RoomRequest dto) {
+        return roomRepository.findById(dto.getRoomId())
+                .map(room -> {
+                    room.setCurrentRequest(dto.getRequestMessage());
+                    return ResponseEntity.ok(roomRepository.save(room));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+    @PutMapping("/{id}/clear-request")
+    public ResponseEntity<Room> clearRoomRequest(@PathVariable Long id) {
+        return roomRepository.findById(id)
+                .map(room -> {
+                    room.setCurrentRequest(null);
+                    return ResponseEntity.ok(roomRepository.save(room));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
-    public ResponseEntity<?> addRoom(@RequestBody Room room) {
-        // Check if room number already exists
-        if (roomRepository.existsByRoomNumber(room.getRoomNumber())) {
-            // This message is what React will receive
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Room " + room.getRoomNumber() + " already exists!");
-        }
-        return ResponseEntity.ok(roomRepository.save(room));
-    }
-    @DeleteMapping("/{id}") // Handles "Deleting" a room by its ID
-    public void deleteRoom(@PathVariable Long id) {
-        roomRepository.deleteById(id);
-    }
-    @PutMapping("/{id}/clean")
-    public Room markCleaned(@PathVariable Long id) {
-        Room room = roomRepository.findById(id).orElseThrow();
-        room.setStatus("Available"); // 👈 This moves it from Cleaning to Available
+    public Room addRoom(@RequestBody Room room) {
+        if (room.getStatus() == null) room.setStatus("Available");
         return roomRepository.save(room);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
+        roomRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/clean")
+    public ResponseEntity<Room> markCleaned(@PathVariable Long id) {
+        return roomRepository.findById(id)
+                .map(room -> {
+                    room.setStatus("Available");
+                    return ResponseEntity.ok(roomRepository.save(room));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

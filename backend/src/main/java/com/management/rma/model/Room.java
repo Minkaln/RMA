@@ -26,6 +26,7 @@ public class Room {
     private String phoneNumber;
     private String type;
     private String status;
+    private String currentRequest;
 
     public Room(String roomNumber, String type, Double price, String status) {
         this.roomNumber = roomNumber;

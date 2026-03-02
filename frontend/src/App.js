@@ -46,7 +46,7 @@ function App() {
         e.preventDefault();
         const requestData = {
             roomId: selectedRoomId,
-            requestMessage: formData.supplyItem
+            requestMessage: formData.supplyItem // Make sure this matches the DTO field name
         };
 
         axios.post('http://localhost:8080/api/rooms/request', requestData)
@@ -54,16 +54,23 @@ function App() {
                 fetchRooms();
                 closeModals();
             })
-            .catch(err => alert("Failed to send request: " + err.message));
+            .catch(err => alert("Request failed: " + err.message));
     };
 
     const clearRequest = (roomId) => {
-        // Logic to clear request via backend if endpoint exists,
-        // otherwise this local update will be overwritten on next fetch.
-        const updatedRooms = rooms.map(r =>
-            r.id === roomId ? { ...r, currentRequest: null } : r
-        );
-        setRooms(updatedRooms);
+        // This calls the backend to set currentRequest to NULL
+        axios.put(`http://localhost:8080/api/rooms/${roomId}/clear-request`)
+            .then(() => {
+                fetchRooms(); // Refresh the list from the database
+            })
+            .catch(err => {
+                console.error("Clear request failed:", err);
+                // Fallback: local update if backend isn't ready yet
+                const updatedRooms = rooms.map(r =>
+                    r.id === roomId ? { ...r, currentRequest: null } : r
+                );
+                setRooms(updatedRooms);
+            });
     };
 
     const submitBooking = (e) => {
@@ -262,7 +269,22 @@ function App() {
 
                         <form onSubmit={activeModal === 'supply' ? submitSupplyRequest : activeModal === 'book' ? submitBooking : submitDirectCheckIn} className="space-y-4">
                             {activeModal === 'supply' ? (
-                                <Input label="What is needed?" placeholder="e.g. Extra pillows, AC repair, Laundry..." value={formData.supplyItem} onChange={val => setFormData({...formData, supplyItem: val})} required />
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
+                                        Request Type
+                                    </label>
+                                    <select
+                                        className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-bold"
+                                        value={formData.supplyItem}
+                                        onChange={(e) => setFormData({...formData, supplyItem: e.target.value})}
+                                        required
+                                    >
+                                        <option value="">-- Choose a service --</option>
+                                        <option value="Room Cleaning">Room Cleaning</option>
+                                        <option value="Maintenance Needed">Maintenance Needed</option>
+                                        <option value="Extra Supplies">Extra Supplies</option>
+                                    </select>
+                                </div>
                             ) : (
                                 <>
                                     <Input label="Guest Name" value={formData.guestName} onChange={val => setFormData({...formData, guestName: val})} required />
