@@ -7,7 +7,6 @@ A full-stack management application for tracking hotel rooms, guest reservations
 ## Live Deployment
 * **Website:** [RMA](rma-frontend-production.up.railway.app)
 
----
 
 ## Tech Stack
 This project utilizes a modern **Full-Stack** architecture:
