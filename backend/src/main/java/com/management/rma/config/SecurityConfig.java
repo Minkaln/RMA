@@ -22,49 +22,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. MUST DISABLE CSRF to fix the 403
-                .csrf(csrf -> csrf.disable())
-
-                // 2. Enable CORS with the bean below
-                .cors(Customizer.withDefaults())
-
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for development
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow Login
-                        .requestMatchers("/api/rooms/**").authenticated() // Protect Rooms
+                        .requestMatchers("/api/auth/**").permitAll() // Allow everyone to try logging in
                         .anyRequest().authenticated()
-                )
-
-                // 3. Ensure Session is created when needed
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                ).logout(logout -> logout
-                        .logoutUrl("/api/auth/logout") // Define the custom path here
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_OK);
-                        })
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
                 );
-
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "https://your-frontend-name.up.railway.app"
-        ));
-
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("*"));
-
-        config.setAllowCredentials(true);
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Use your EXACT frontend URL here
+        configuration.setAllowedOrigins(Arrays.asList("https://rma-frontend-production.up.railway.app"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true); // Required for your axios withCredentials: true
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
