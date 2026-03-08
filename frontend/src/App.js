@@ -3,8 +3,7 @@ import axios from 'axios';
 
 // API Instance with credentials enabled for session cookies
 const api = axios.create({
-    // It checks for the Railway variable first, then fallback to localhost
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
+    baseURL: 'https://rma-production-86dc.up.railway.app/api',
     withCredentials: true
 });
 

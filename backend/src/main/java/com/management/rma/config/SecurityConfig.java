@@ -23,20 +23,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Enable the CORS settings we made earlier
+                // 1. Enable CORS using the bean below
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 2. DISABLE CSRF (This is why your POST is failing)
+                // 2. Disable CSRF so POST requests are allowed
                 .csrf(csrf -> csrf.disable())
 
-                // 3. Set the Permissions
+                // 3. Set Permissions
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow Login/Register
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow Preflight "OPTIONS"
-                        .requestMatchers("/api/rooms/**").permitAll() // Allow Room management
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Critical for browser handshake
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/rooms/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                // 4. Ensure Session Management is Stateless if you use JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
@@ -45,11 +44,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Use your EXACT frontend URL here
+        // Use your exact Railway frontend URL
         configuration.setAllowedOrigins(Arrays.asList("https://rma-frontend-production.up.railway.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true); // Required for your axios withCredentials: true
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
