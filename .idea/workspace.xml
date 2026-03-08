@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5b28238d-107d-4101-919c-e6449ae57c9e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/management/rma/model/Staff.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/management/rma/repository/StaffRepository.java" beforeDir="false" />
-    </list>
+    <list default="true" id="5b28238d-107d-4101-919c-e6449ae57c9e" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -150,7 +147,7 @@
       <workItem from="1772707200216" duration="8553000" />
       <workItem from="1772882388348" duration="6872000" />
       <workItem from="1772953583110" duration="9720000" />
-      <workItem from="1772963400217" duration="6947000" />
+      <workItem from="1772963400217" duration="7402000" />
     </task>
     <servers />
   </component>
