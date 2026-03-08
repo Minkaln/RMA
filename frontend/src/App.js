@@ -158,6 +158,17 @@
             return acc;
         }, {});
 
+        const deleteSpecificRequest = (roomId, requestId) => {
+            api.delete(`/rooms/${roomId}/requests/${requestId}`)
+                .then(() => fetchRooms())
+                .catch(err => console.error("Could not delete request:", err));
+        };
+
+        const clearAllRoomRequests = (roomId) => {
+            api.delete(`/rooms/${roomId}/requests/clear-all`)
+                .then(() => fetchRooms())
+                .catch(err => console.error("Could not clear requests:", err));
+        };
         const floorKeys = Object.keys(groupedRooms).sort();
 
         // 6. RENDER LOGIC
@@ -260,21 +271,31 @@
                                                                 </div>
                                                                 {room.maintenanceRequests && room.maintenanceRequests.length > 0 && (
                                                                     <div className="mt-6 border-t border-slate-100 pt-4">
-                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Active Maintenance</span>
+                                                                        <div className="flex justify-between items-center mb-2">
+                                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Active Maintenance</span>
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); clearAllRoomRequests(room.id); }}
+                                                                                className="text-[10px] font-black text-rose-500 hover:text-rose-700 uppercase"
+                                                                            >
+                                                                                Clear All
+                                                                            </button>
+                                                                        </div>
                                                                         <div className="mt-2 space-y-2">
                                                                             {room.maintenanceRequests.map((req) => (
-                                                                                <div key={req.id} className="flex items-center justify-between bg-amber-50 border border-amber-100 p-3 rounded-xl">
+                                                                                <div key={req.id} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
                                                                                     <div className="flex flex-col">
-                                                                                        <span className="text-sm font-bold text-amber-900">{req.message}</span>
-                                                                                        <span className="text-[10px] text-amber-600 font-medium">
-                                                                                        {new Date(req.createdAt).toLocaleString()}
-                                                                                    </span>
+                                                                                        <span className="text-sm font-bold text-slate-700">{req.message}</span>
+                                                                                        <span className="text-[10px] text-slate-400 font-medium">
+                                                                                            {new Date(req.createdAt).toLocaleTimeString()}
+                                                                                        </span>
                                                                                     </div>
-                                                                                    {req.completed ? (
-                                                                                        <span className="text-[10px] font-bold text-green-600 uppercase">Completed</span>
-                                                                                    ) : (
-                                                                                        <span className="animate-pulse h-2 w-2 bg-amber-500 rounded-full"></span>
-                                                                                    )}
+                                                                                    <button
+                                                                                        onClick={(e) => { e.stopPropagation(); deleteSpecificRequest(room.id, req.id); }}
+                                                                                        className="p-2 text-slate-300 hover:text-green-600 transition-colors"
+                                                                                        title="Complete Task"
+                                                                                    >
+                                                                                        <CheckCircleIcon />
+                                                                                    </button>
                                                                                 </div>
                                                                             ))}
                                                                         </div>
@@ -424,6 +445,12 @@
     const TrashIcon = () => (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+    );
+
+    const CheckCircleIcon = () => (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
     );
 
