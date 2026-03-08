@@ -14,28 +14,22 @@ java {
     }
 }
 
+springBoot {
+    mainClass = 'com.management.rma.RmaApplication'
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
-    // Security: For the "Authenticate Staff" gatekeeper logic
     implementation 'org.springframework.boot:spring-boot-starter-security'
-
-    // JPA: To connect your Java Entities to PostgreSQL tables
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-    // PostgreSQL Driver: Required for Railway database connection
     runtimeOnly 'org.postgresql:postgresql'
-
-    // Lombok: To keep your Entities clean (auto-generates Getters/Setters)
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-
-    // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
