@@ -24,24 +24,23 @@ This project utilizes a modern **Full-Stack** architecture:
 ## Deployment Guide (Railway)
 
 ### 1. Database Provisioning
-1. Add a **MySQL** service to your Railway project.
-2. Railway automatically generates variables like `MYSQL_URL`, `MYSQLUSER`, and `MYSQLPASSWORD`.
+1. Add a **PostgreSQL** service to your Railway project.
+2. Railway automatically generates variables like `DATABASE_URL`, `PGUSER`, and `PGPASSWORD`.
 
 ### 2. Backend Configuration
 1. Connect your GitHub repository to a new Railway Service.
-2. In the **Variables** tab, map your Spring Boot properties to the Railway Database variables:
-   * `SPRING_DATASOURCE_URL`: `${{MySQL.MYSQL_URL}}`
-   * `SPRING_DATASOURCE_USERNAME`: `${{MySQL.MYSQLUSER}}`
-   * `SPRING_DATASOURCE_PASSWORD`: `${{MySQL.MYSQLPASSWORD}}`
+2. In the **Variables** tab, map your Spring Boot properties to the Railway PostgreSQL variables:
+   * `SPRING_DATASOURCE_URL`: `jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}`
+   * `SPRING_DATASOURCE_USERNAME`: `${{Postgres.PGUSER}}`
+   * `SPRING_DATASOURCE_PASSWORD`: `${{Postgres.PGPASSWORD}}`
    * `SERVER_PORT`: `8080`
-3. Ensure `SecurityConfig.java` allows the domain of your live frontend for **CORS**.
+3. Ensure `SecurityConfig.java` allows the domain of your live frontend for **CORS** (Cross-Origin Resource Sharing).
 
 ### 3. Frontend Configuration
 1. Connect your frontend folder to a new Railway Service.
 2. Set the environment variable:
    * `REACT_APP_API_URL`: `https://rma-production-86dc.up.railway.app`
-3. Railway will build the production assets and serve them automatically.
-
+3. Railway will build the production assets using Nixpacks and serve them automatically.
 ---
 
 ## Database Structure
