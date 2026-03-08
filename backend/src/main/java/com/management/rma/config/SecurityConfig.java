@@ -23,17 +23,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Enable CORS using the bean below
+                // 1. Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 2. Disable CSRF so POST requests are allowed
+                // 2. DISABLE CSRF (Essential for POST/PUT/DELETE)
                 .csrf(csrf -> csrf.disable())
 
                 // 3. Set Permissions
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Critical for browser handshake
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/rooms/**").permitAll()
+                        .requestMatchers("/api/reservations/**").permitAll() // ADD THIS LINE
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -44,10 +45,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Use your exact Railway frontend URL
         configuration.setAllowedOrigins(Arrays.asList("https://rma-frontend-production.up.railway.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+
+        // Add "Content-Type" and "Authorization" explicitly
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
