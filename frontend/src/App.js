@@ -89,13 +89,19 @@ function App() {
 
     // 4. HANDLERS
     const handleLogout = () => {
-        api.post('/auth/logout')
+        // Try removing the '/auth' prefix
+        api.post('/logout')
             .then(() => {
                 setIsAuthenticated(false);
                 setUserRole("");
                 setRooms([]);
+                console.log("Logged out successfully.");
             })
-            .catch(err => console.error("Logout failed:", err));
+            .catch(err => {
+                console.error("Logout failed:", err);
+                // Forced logout on frontend if backend fails
+                setIsAuthenticated(false);
+            });
     };
 
     const handleAddRoom = (e) => {

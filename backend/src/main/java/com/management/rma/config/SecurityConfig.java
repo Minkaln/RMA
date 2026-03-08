@@ -1,5 +1,6 @@
 package com.management.rma.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -36,8 +37,15 @@ public class SecurityConfig {
                 // 3. Ensure Session is created when needed
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                ).logout(logout -> logout
+                        .logoutUrl("/api/auth/logout") // Define the custom path here
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        })
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                 );
-
+        
         return http.build();
     }
 
