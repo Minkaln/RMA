@@ -1,6 +1,9 @@
 package com.management.rma.dto;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
 
 public class RoomRequest {
+    @Getter
     private Long roomId;
     private String requestMessage;
 
@@ -12,15 +15,10 @@ public class RoomRequest {
         this.requestMessage = requestMessage;
     }
 
-    // Getters and Setters
-    public Long getRoomId() {
-        return roomId;
-    }
-
     public void setRoomId(Long roomId) {
         this.roomId = roomId;
     }
-
+    @JsonProperty("requestMessage")
     public String getRequestMessage() {
         return requestMessage;
     }
@@ -28,4 +26,5 @@ public class RoomRequest {
     public void setRequestMessage(String requestMessage) {
         this.requestMessage = requestMessage;
     }
+
 }

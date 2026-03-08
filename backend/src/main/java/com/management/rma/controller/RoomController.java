@@ -3,6 +3,7 @@ package com.management.rma.controller;
 import com.management.rma.dto.RoomRequest;
 import com.management.rma.model.Room;
 import com.management.rma.repository.RoomRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,15 +23,20 @@ public class RoomController {
 
     @GetMapping
     public List<Room> getAllRooms() {
-        return roomRepository.findAll();
+        List<Room> rooms = roomRepository.findAll();
+        System.out.println("DEBUG: Number of rooms found in database: " + rooms.size());
+        return rooms;
     }
 
     // This handles the 📦 Request button from React
     @PostMapping("/request")
+    @Transactional
     public ResponseEntity<Room> handleRoomRequest(@RequestBody RoomRequest dto) {
+        System.out.println("Recieved Room ID: "+dto.getRoomId());
+        System.out.println(("Recieved Room Request: "+dto.getRequestMessage()));
         return roomRepository.findById(dto.getRoomId())
                 .map(room -> {
-                    room.setCurrentRequest(dto.getRequestMessage());
+                    room.addMaintenanceRequest(dto.getRequestMessage());
                     return ResponseEntity.ok(roomRepository.save(room));
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -65,5 +71,23 @@ public class RoomController {
                     return ResponseEntity.ok(roomRepository.save(room));
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{roomId}/requests/{requestId}")
+    @Transactional
+    public ResponseEntity<Room> deleteSpecificRequest(@PathVariable Long roomId, @PathVariable Long requestId) {
+        return roomRepository.findById(roomId).map(room -> {
+            // Now 'req' is an object, so .getId() works!
+            room.getMaintenanceRequests().removeIf(req -> req.getId().equals(requestId));
+            return ResponseEntity.ok(roomRepository.save(room));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+    @DeleteMapping("/{roomId}/requests/clear-all")
+    @Transactional
+    public ResponseEntity<Room> clearAllRoomRequests(@PathVariable Long roomId) {
+        return roomRepository.findById(roomId).map(room -> {
+            room.getMaintenanceRequests().clear();
+            return ResponseEntity.ok(roomRepository.save(room));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

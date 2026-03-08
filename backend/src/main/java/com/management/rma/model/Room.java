@@ -1,12 +1,14 @@
 package com.management.rma.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.management.rma.dto.MaintenanceRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,7 +28,8 @@ public class Room {
     private String status;
     private LocalDateTime currentCheckInTime;
     private LocalDateTime lastCheckOutTime;
-    private String currentRequest;
+    @Column(name = "current_request")
+    private String request;
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
@@ -40,26 +43,11 @@ public class Room {
         this.status = status;
     }
 
-    /**
-     * Get guest name from CURRENT active reservation only
-     * Returns null if room is Available or Cleaning
-     */
     @Transient
     public String getGuestName() {
-        if (reservations == null || reservations.isEmpty()) return null;
-        return reservations.stream()
-                .filter(res -> res.getReservationStatus() != null &&
-                        (res.getReservationStatus().equals("Checked-In") ||
-                                res.getReservationStatus().equals("Direct-Check-In")))
-                .findFirst()
-                .map(Reservation::getGuestName)
-                .orElse(null);
+        return null;
     }
 
-    /**
-     * Get phone number from CURRENT active reservation only
-     * Returns null if room is Available or Cleaning
-     */
     @Transient
     public String getPhoneNumber() {
         if (reservations == null || reservations.isEmpty()) {
@@ -73,5 +61,28 @@ public class Room {
                 .findFirst()
                 .map(Reservation::getPhoneNumber)
                 .orElse(null);
+    }
+
+    public void setCurrentRequest(String request) {
+        this.request = request;
+    }
+
+
+    // Update the bridge method
+    @CollectionTable(name = "room_requests", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "request_message")
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<MaintenanceRequest> maintenanceRequests = new ArrayList<>();
+    public void addMaintenanceRequest(String message) {
+        if (this.maintenanceRequests == null) {
+            this.maintenanceRequests = new ArrayList<>();
+        }
+        // Bridge: Create the object and link it to this room
+        this.maintenanceRequests.add(new MaintenanceRequest(message, this));
+    }
+
+    // Clear all requests (for your 'clean' button)
+    public void clearAllRequests() {
+        this.maintenanceRequests.clear();
     }
 }

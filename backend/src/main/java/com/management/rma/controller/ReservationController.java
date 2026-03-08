@@ -6,6 +6,7 @@ import com.management.rma.model.Room;
 import com.management.rma.repository.ReservationRepository;
 import com.management.rma.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
@@ -21,20 +22,24 @@ public class ReservationController {
     private RoomRepository roomRepository;
 
     @PostMapping("/book")
-    public Reservation bookRoom(@RequestBody ReservationRequest request) {
+    public ResponseEntity<Room> bookRoom(@RequestBody ReservationRequest request) {
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Room not found"));
-
-        room.setStatus("Reserved");
-        roomRepository.save(room);
 
         Reservation res = new Reservation();
         res.setGuestName(request.getGuestName());
         res.setPhoneNumber(request.getPhoneNumber());
-        res.setRoom(room);
-        // Note: reservationStatus is null for "Reserved" bookings
 
-        return reservationRepository.save(res);
+        // CRITICAL: Ensure this line exists!
+        res.setReservationStatus("Reserved");
+
+        res.setRoom(room);
+        reservationRepository.save(res);
+
+        room.setStatus("Reserved");
+        roomRepository.save(room);
+
+        return ResponseEntity.ok(room);
     }
 
     @PutMapping("/room/{roomId}/cancel")

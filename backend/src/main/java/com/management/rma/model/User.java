@@ -4,17 +4,20 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "staff_accounts")
+@Table(name = "users")
 @Data
-public class Staff {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
     private String username;
-
     private String password;
-    private boolean isAdmin;
-    private String role; // e.g., "FRONT_DESK", "HOUSEKEEPING"
+    private String role;
+
+    @Column(name = "failed_attempts")
+    private int failedAttempts = 0;
+
+    @Column(name = "is_locked")
+    private boolean locked = false;
 }

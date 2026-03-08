@@ -27,6 +27,7 @@ dependencies {
 
     // JPA: To connect your Java Entities to PostgreSQL tables
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // PostgreSQL Driver: Required for Railway database connection
     runtimeOnly 'org.postgresql:postgresql'
