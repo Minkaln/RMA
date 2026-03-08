@@ -15,7 +15,7 @@ This project utilizes a modern **Full-Stack** architecture:
 | :--- | :--- |
 | **Frontend** | React.js, Tailwind CSS, Axios |
 | **Backend** | Java, Spring Boot, Spring Security |
-| **Database** | Postgre (Hosted on Railway) |
+| **Database** | PostgreSQL (Hosted on Railway) |
 | **Deployment** | Railway |
 | **Version Control** | GitHub |
 
