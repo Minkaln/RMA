@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.3'
+    id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -10,7 +10,7 @@ description = 'RMA'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -19,7 +19,6 @@ repositories {
 }
 
 dependencies {
-    // Web: For REST Controllers and JSON (The Processes in your DFD)
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Security: For the "Authenticate Staff" gatekeeper logic
