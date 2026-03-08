@@ -3,6 +3,7 @@ package com.management.rma.config;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,12 +23,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for development
+                // 1. Enable the CORS settings we made earlier
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // 2. DISABLE CSRF (This is why your POST is failing)
+                .csrf(csrf -> csrf.disable())
+
+                // 3. Set the Permissions
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow everyone to try logging in
+                        .requestMatchers("/api/auth/**").permitAll() // Allow Login/Register
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow Preflight "OPTIONS"
+                        .requestMatchers("/api/rooms/**").permitAll() // Allow Room management
                         .anyRequest().authenticated()
-                );
+                )
+                // 4. Ensure Session Management is Stateless if you use JWT
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
         return http.build();
     }
 
