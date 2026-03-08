@@ -59,3 +59,39 @@ The system uses a relational database to manage hotel operations.
 * **Direct Check-in:** Quick check-in process for walk-in guests.
 * **Maintenance Management:** Staff can create and delete specific room cleaning tasks.
 * **Security:** Role-based access and CORS protection via Spring Security.
+
+```mermaid
+erDiagram
+    USERS {
+        Long id PK
+        String username
+        String password
+        String role
+    }
+    ROOMS ||--o{ RESERVATIONS : "mappedBy room"
+    ROOMS ||--o{ MAINTENANCE_REQUESTS : "mappedBy room"
+
+    ROOMS {
+        Long id PK
+        String roomNumber UK
+        String type
+        String status
+        String current_request
+    }
+
+    RESERVATIONS {
+        Long id PK
+        Long room_id FK
+        String guestName
+        String phoneNumber
+        String reservationStatus
+    }
+
+    MAINTENANCE_REQUESTS {
+        Long id PK
+        Long room_id FK
+        String message
+        DateTime createdAt
+        Boolean completed
+    }
+```
