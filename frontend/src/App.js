@@ -262,7 +262,7 @@
                                                         <tr className="bg-slate-50/50">
                                                             <td colSpan="4" className="px-8 py-6 border-l-4 border-indigo-500 relative">
                                                                 {userRole === 'ADMIN' && (
-                                                                    <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('delete');}} className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 transition-colors"><TrashIcon /></button>
+                                                                    <button onClick={(e) => {e.stopPropagation(); setSelectedRoomId(room.id); setActiveModal('delete');}} className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 transition-colors"><TrashIcon /> DE</button>
                                                                 )}
                                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                                     <DetailItem label="Guest Name" value={getActiveGuest(room) || 'N/A'} />
