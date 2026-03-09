@@ -95,3 +95,5 @@ erDiagram
         Boolean completed
     }
 ```
+
+**AI Usage Declaration:** You can view the full declaration [here](./AIUSAGE.md).
