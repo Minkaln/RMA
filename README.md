@@ -95,5 +95,6 @@ erDiagram
         Boolean completed
     }
 ```
+**Short Video:** You can watch the demonstration [here](https://youtu.be/U2d4-i2tpKI).
 
 **AI Usage Declaration:** You can view the full declaration [here](./AIUSAGE.md).
