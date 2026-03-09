@@ -423,7 +423,7 @@
             Available: "bg-green-100 text-green-700 border-green-200",
             Reserved: "bg-amber-100 text-amber-700 border-amber-200",
             Occupied: "bg-rose-100 text-rose-700 border-rose-200",
-            Cleaning: "bg-orange-100 text-blue-700 border-orange-200"
+            Cleaning: "bg-blue-100 text-blue-700 border-blue-200"
         };
         return <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${styles[status]}`}>{status}</span>;
     };
