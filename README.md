@@ -61,6 +61,8 @@ The system uses a relational database to manage hotel operations.
 
 ```mermaid
 erDiagram
+    ROOMS ||--o{ RESERVATIONS : "mappedBy room"
+    ROOMS ||--o{ MAINTENANCE_REQUESTS : "mappedBy room"
 
     ROOMS {
         Long id PK
