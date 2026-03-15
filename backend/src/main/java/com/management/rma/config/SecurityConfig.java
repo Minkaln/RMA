@@ -48,7 +48,6 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList("https://rma-frontend-production.up.railway.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // Add "Content-Type" and "Authorization" explicitly
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         configuration.setAllowCredentials(true);
 

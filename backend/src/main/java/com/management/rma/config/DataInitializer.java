@@ -29,7 +29,6 @@ public class DataInitializer implements CommandLineRunner {
             admin.setFailedAttempts(0);
 
             userRepository.save(admin);
-            System.out.println("✅ Default Admin created: admin / admin123");
         }
 
         if (userRepository.findByUsername("user") == null) {
@@ -41,7 +40,6 @@ public class DataInitializer implements CommandLineRunner {
             normalUser.setFailedAttempts(0);
 
             userRepository.save(normalUser);
-            System.out.println("✅ Default User created: user / user123");
         }
     }
 }
