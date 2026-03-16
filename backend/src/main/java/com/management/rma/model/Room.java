@@ -35,8 +35,6 @@ public class Room {
     @JsonManagedReference
     private List<Reservation> reservations;
 
-    // OLD FIELDS REMOVED - NO guestName or phoneNumber in database
-
     public Room(String roomNumber, String type, Double price, String status) {
         this.roomNumber = roomNumber;
         this.type = type;
@@ -81,7 +79,6 @@ public class Room {
         this.maintenanceRequests.add(new MaintenanceRequest(message, this));
     }
 
-    // Clear all requests (for your 'clean' button)
     public void clearAllRequests() {
         this.maintenanceRequests.clear();
     }
